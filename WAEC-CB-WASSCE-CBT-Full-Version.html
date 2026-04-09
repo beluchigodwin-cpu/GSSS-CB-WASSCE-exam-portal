@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>GSSS CB-WASSCE | Professional CBT System (Hybrid Mode)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', 'Roboto', sans-serif; background: #eef2f7; overflow-x: hidden; }
+    .waec-header { background: #002D62; color: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; border-bottom: 3px solid #F5C400; }
+    .logo-area h1 { font-size: 1.7rem; }
+    .logo-area span { color: #F5C400; }
+    .student-badge { display: flex; align-items: center; gap: 12px; background: rgba(255,255,240,0.15); padding: 6px 14px; border-radius: 40px; }
+    .student-photo { width: 48px; height: 48px; border-radius: 50%; background: #fff; border: 2px solid #F5C400; object-fit: cover; }
+    .countdown { background: #c0392b; padding: 8px 18px; border-radius: 40px; font-weight: bold; font-size: 1.5rem; font-family: monospace; }
+    .exam-main { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 130px); }
+    .question-palette { width: 250px; background: white; border-right: 1px solid #ccc; padding: 20px 12px; overflow-y: auto; }
+    .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .q-btn { background: white; border: 1px solid #aaa; padding: 8px 0; text-align: center; font-weight: bold; cursor: pointer; border-radius: 6px; }
+    .q-btn.answered { background: #2ecc71; color: white; }
+    .q-btn.flagged { background: #f1c40f; color: #2c3e50; }
+    .q-btn.current { border: 3px solid #002D62; background: #d9eaff; }
+    .question-area { flex: 1; padding: 30px 40px; overflow-y: auto; background: #fffef7; }
+    .option-item { margin: 16px 0; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .option-item input { width: 20px; height: 20px; cursor: pointer; }
+    .nav-bar { background: #eef2f5; padding: 14px 24px; display: flex; gap: 20px; justify-content: center; border-top: 1px solid #ccc; }
+    .nav-btn { background: #002D62; color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; font-weight: bold; }
+    .nav-btn.danger { background: #c0392b; }
+    .nav-btn.warning { background: #e67e22; }
+    .admin-panel { background: #fff; padding: 20px; max-height: 90vh; overflow-y: auto; }
+    .card { background: #f9f9ff; border-radius: 16px; padding: 18px; margin-bottom: 24px; border: 1px solid #ddd; }
+    .btn-primary { background: #002D62; color: white; border: none; padding: 8px 16px; border-radius: 30px; cursor: pointer; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .instruction-box { max-width: 800px; margin: 60px auto; background: white; border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .instruction-timer { font-size: 3rem; font-weight: bold; color: #c0392b; margin: 20px 0; font-family: monospace; }
+    input, select, textarea { font-family: inherit; border-radius: 8px; border: 1px solid #ccc; padding: 10px; }
+    .flex-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .exam-container { display: flex; flex-direction: column; height: 100vh; }
+    .paper-theory-box { background: #fff9e6; border: 2px dashed #F5C400; padding: 25px; border-radius: 20px; margin: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+<div id="app-root">Loading...</div>
+ 
+<script>
+  // ======================== DATA ========================
+  let appData = {
+    students: [],
+    objectiveQuestions: [],
+    theoryQuestions: [],
+    settings: {
+      adminPassword: "Haggai08",
+      objTimerMinutes: 60,
+      theoryTimerMinutes: 45,
+      objInstructionTimer: 2,
+      theoryInstructionTimer: 2,
+      examPaused: false,
+      objInstructionText: "Read each question carefully and select the correct answer. No extra materials allowed.",
+      theoryInstructionText: "Answer all theory questions on the physical answer sheet provided. Use clear handwriting. This is a hybrid examination – digital submission is not required."
+    }
+  };
+
+  function loadData() {
+    const stored = localStorage.getItem("GSSS_CBT_FINAL");
+    if(stored) { 
+      try { appData = JSON.parse(stored); } catch(e) { console.error("Corrupted storage, resetting..."); localStorage.removeItem("GSSS_CBT_FINAL"); initDemoData(); saveData(); }
+      console.log("Data loaded:", appData.students.length, "students");
+    } else { initDemoData(); saveData(); }
+  }
+  function saveData() { localStorage.setItem("GSSS_CBT_FINAL", JSON.stringify(appData)); }
+
+  function initDemoData() {
+    appData.students = [
+      { id: "GSSS001", name: "Adeola Johnson", password: "adeola123", classLevel: "SS2", batch: "Morning", subject: "Mathematics", examDate: "2026-04-15", photoDataURL: "", taken: false, answersObj: {}, theoryCompleted: false, objCompleted: false, objScore: null },
+      { id: "GSSS002", name: "Emeka Okafor", password: "emeka456", classLevel: "SS1", batch: "Afternoon", subject: "English", examDate: "2026-04-15", photoDataURL: "", taken: false, answersObj: {}, theoryCompleted: false, objCompleted: false, objScore: null },
+      { id: "GSSS003", name: "Fatima Bello", password: "fatima789", classLevel: "SS3", batch: "Evening", subject: "Physics", examDate: "2026-04-15", photoDataURL: "", taken: false, answersObj: {}, theoryCompleted: false, objCompleted: false, objScore: null }
+    ];
+    // Objective questions with class & subject
+    appData.objectiveQuestions = [
+      { id: "obj1", text: "What is the capital of Nigeria?", options: ["A. Abuja", "B. Lagos", "C. Kano", "D. Ibadan"], correctLetter: "A", classLevel: "SS1", subject: "General", imageData: null },
+      { id: "obj2", text: "Solve for x: 2x + 5 = 15", options: ["A. 5", "B. 10", "C. 7", "D. 6"], correctLetter: "A", classLevel: "SS2", subject: "Mathematics", imageData: null },
+      { id: "obj3", text: "Who wrote 'Things Fall Apart'?", options: ["A. Chinua Achebe", "B. Wole Soyinka", "C. Chimamanda Adichie", "D. Ben Okri"], correctLetter: "A", classLevel: "SS3", subject: "English", imageData: null }
+    ];
+    appData.theoryQuestions = [
+      { id: "th1", text: "Discuss the effects of climate change on agriculture.", classLevel: "SS2", subject: "Geography", imageData: null },
+      { id: "th2", text: "Explain the concept of democracy and its principles.", classLevel: "SS3", subject: "Government", imageData: null }
+    ];
+  }
+
+  loadData();
+
+  // ======================== GLOBAL STATE ========================
+  let currentView = "login";
+  let currentStudent = null;
+  let examStage = "instruction_obj";
+  let currentQuestionIndex = 0;
+  let flaggedSet = new Set();
+  let examTimer = null;
+  let timerSeconds = 0;
+  let examActive = false;
+  let objQuestionsFiltered = [];   // no shuffle, fixed order based on class+subject
+  let theoryQuestionsFiltered = [];
+
+  function getFilteredQuestions(questions, student) {
+    return questions.filter(q => q.classLevel === student.classLevel && q.subject === student.subject);
+  }
+
+  function canStudentProceedToTheory(student) {
+    return !(student.objCompleted && !student.theoryCompleted && appData.settings.examPaused);
+  }
+
+  function forceExit(reason) {
+    if(!examActive) return;
+    examActive = false;
+    if(examTimer) clearInterval(examTimer);
+    alert(reason);
+    if(currentStudent && examStage !== "finished") {
+      if(examStage === "objective") { 
+        let correct = 0;
+        for(let q of objQuestionsFiltered) {
+          if(currentStudent.answersObj[q.id] === q.correctLetter) correct++;
+        }
+        currentStudent.objScore = { correct, total: objQuestionsFiltered.length };
+        currentStudent.objCompleted = true; 
+        saveData(); 
+      }
+      else if(examStage === "theory_hybrid") { 
+        currentStudent.theoryCompleted = true; 
+        currentStudent.taken = true;
+        saveData(); 
+      }
+    }
+    currentView = "login";
+    render();
+  }
+
+  function startTimer(seconds, onExpire) {
+    if(examTimer) clearInterval(examTimer);
+    timerSeconds = seconds;
+    examTimer = setInterval(() => {
+      if(!examActive) return;
+      if(timerSeconds <= 0) {
+        clearInterval(examTimer);
+        if(onExpire) onExpire();
+      } else {
+        timerSeconds--;
+        let disp = document.getElementById("stageTimer");
+        if(disp) {
+          let mins = Math.floor(timerSeconds/60);
+          let secs = timerSeconds%60;
+          disp.innerText = `${mins.toString().padStart(2,"0")}:${secs.toString().padStart(2,"0")}`;
+        }
+      }
+    }, 1000);
+  }
+
+  // ======================== RENDER FUNCTIONS ========================
+  function render() {
+    const root = document.getElementById("app-root");
+    if(currentView === "login") root.innerHTML = renderLogin();
+    else if(currentView === "admin-login") root.innerHTML = renderAdminLogin();
+    else if(currentView === "admin-dashboard") root.innerHTML = renderAdminDashboard();
+    else if(currentView === "exam" && currentStudent) root.innerHTML = renderExamByStage();
+    else root.innerHTML = "<div style='padding:2rem;text-align:center'>Error</div>";
+    setTimeout(() => attachEvents(), 10);
+  }
+
+  function renderLogin() {
+    return `<div style="max-width:500px;margin:80px auto;background:white;padding:30px;border-radius:24px;box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+      <h2 style="color:#002D62">GSSS CB-WASSCE (Hybrid)</h2>
+      <div style="border-bottom:2px solid #F5C400;width:60px;margin:10px 0 20px"></div>
+      <div id="loginError" style="color:red;margin-bottom:10px;display:none;"></div>
+      <input type="text" id="studentId" placeholder="Student ID" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc"/>
+      <input type="password" id="studentPwd" placeholder="Password" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc"/>
+      <button id="loginBtn" class="btn-primary" style="width:100%;margin-top:10px">Enter Examination Hall</button>
+      <button id="gotoAdminBtn" style="margin-top:15px;background:#aaa;width:100%;padding:8px;border:none;border-radius:30px;cursor:pointer">Admin Portal</button>
+      <p style="margin-top:15px;font-size:12px;color:#555"><strong>Demo Students:</strong><br/>GSSS001 / adeola123 (SS2 Maths)<br/>GSSS002 / emeka456 (SS1 English)<br/>GSSS003 / fatima789 (SS3 Physics)</p>
+    </div>`;
+  }
+
+  function renderAdminLogin() {
+    return `<div style="max-width:400px;margin:100px auto;background:white;padding:30px;border-radius:24px;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+      <h2 style="color:#002D62">Admin Login</h2>
+      <input type="password" id="adminPass" placeholder="Admin Password" style="width:100%;padding:10px;margin:15px 0;border-radius:8px"/>
+      <button id="adminAuthBtn" class="btn-primary" style="width:100%">Login</button>
+      <button id="backToLogin" style="margin-top:10px;background:#ccc;width:100%;padding:8px;border:none;border-radius:30px;cursor:pointer">Back</button>
+    </div>`;
+  }
+
+  function renderAdminDashboard() {
+    let studentsList = appData.students.map(s => {
+      let scoreDisplay = s.objScore ? `${s.objScore.correct}/${s.objScore.total}` : (s.objCompleted ? "Graded" : "Not started");
+      return `<tr><td>${s.id}</td><td>${s.name}</td><td>${s.classLevel}</td><td>${s.batch}</td><td>${s.subject}</td><td>${s.taken ? "✅ Taken" : "⏳ Pending"}</td><td>${scoreDisplay}</td>
+      <td><button class="delStudentBtn" data-id="${s.id}" style="background:#e74c3c;color:white;border:none;padding:4px 10px;border-radius:6px;">Delete</button></td></tr>`;
+    }).join("");
+    
+    return `<div class="admin-panel"><h2 style="color:#002D62">🏫 GSSS CBT ADMIN (Hybrid Mode)</h2>
+      <div class="card"><h3>➕ Register Student (Class & Subject)</h3>
+        <div class="flex-row"><input id="stuName" placeholder="Full Name" style="flex:1"/><input id="stuId" placeholder="Student ID" style="flex:1"/><input id="stuPass" placeholder="Password" type="text" style="flex:1"/></div>
+        <div class="flex-row"><select id="stuClass"><option>SS1</option><option>SS2</option><option>SS3</option></select><select id="stuBatch"><option>Morning</option><option>Afternoon</option><option>Evening</option></select><input id="stuSubject" placeholder="Subject"/><input id="stuDate" type="date"/></div>
+        <div class="flex-row"><input type="file" id="stuPhoto" accept="image/*"/><button id="addStudentBtn" class="btn-primary">Add Student</button></div>
+      </div>
+      <div class="card"><h3>📚 Objective Questions (with Class & Subject)</h3><textarea id="bulkObj" rows="3" placeholder="Format: Question?|A|B|C|D|AnswerLetter|Class|Subject" style="width:100%"></textarea><button id="bulkObjBtn" class="btn-primary">Add Bulk</button></div>
+      <div class="card"><h3>📝 Theory Questions (Paper-based – hybrid)</h3><textarea id="bulkTheory" rows="2" placeholder="Each line: Question text | Class | Subject" style="width:100%"></textarea><button id="bulkTheoryBtn" class="btn-primary">Add Theory</button></div>
+      <div class="card"><h3>✏️ Custom Instructions (Admin set)</h3><label>Objective Instruction Text:</label><textarea id="objInstrText" rows="2" style="width:100%">${appData.settings.objInstructionText}</textarea>
+      <label>Theory Instruction Text (hybrid):</label><textarea id="theoryInstrText" rows="2" style="width:100%">${appData.settings.theoryInstructionText}</textarea>
+      <button id="saveInstructionsBtn" class="btn-primary">Save Instructions</button></div>
+      <div class="card"><h3>⏲️ Timers</h3><label>Objective Exam (min):</label> <input id="objExamMins" value="${appData.settings.objTimerMinutes}" style="width:80px"/> 
+      <label>Theory Reading Time (min):</label> <input id="theoryExamMins" value="${appData.settings.theoryTimerMinutes}" style="width:80px"/><br/>
+      <label>Obj Instruction (min):</label> <input id="objInstrMins" value="${appData.settings.objInstructionTimer}" style="width:80px"/> 
+      <label>Theory Instruction (min):</label> <input id="theoryInstrMins" value="${appData.settings.theoryInstructionTimer}" style="width:80px"/> 
+      <button id="setTimersBtn" class="btn-primary">Save Timers</button></div>
+      <div class="card"><h3>⏸️ Exam Control</h3><button id="pauseTheoryBtn" style="background:${appData.settings.examPaused ? '#27ae60' : '#e67e22'};color:white;border:none;padding:8px 16px;border-radius:30px;cursor:pointer">
+        ${appData.settings.examPaused ? "▶ Resume Theory" : "⏸ Pause Theory (block paper transition)"}
+      </button></div>
+      <div class="card"><h3>📊 Student List & Results</h3>
+        <table style="width:100%"><thead><tr style="background:#002D62;color:white"><th>ID</th><th>Name</th><th>Class</th><th>Batch</th><th>Subject</th><th>Status</th><th>Obj Score</th><th>Action</th></tr></thead>
+        <tbody>${studentsList}</tbody></table>
+        <button id="refreshResults" class="btn-primary" style="margin-top:10px">Refresh</button>
+      </div>
+      <div class="card"><h3>🔐 Change Admin Password</h3><input type="password" id="newAdminPass" placeholder="New Password"/><button id="changeAdminPassBtn" class="btn-primary">Change</button></div>
+      <div class="card"><h3>⚠️ Reset All Data</h3><button id="resetDataBtn" style="background:#c0392b;color:white;border:none;padding:8px 16px;border-radius:30px;">Factory Reset</button></div>
+      <button id="adminLogoutBtn" style="background:#555;color:white;border:none;padding:8px 20px;border-radius:30px;margin-top:10px;">Logout</button>
+    </div>`;
+  }
+
+  function renderExamByStage() {
+    if(examStage === "instruction_obj") {
+      return `<div class="instruction-box"><h2 style="color:#002D62">📘 OBJECTIVE TEST INSTRUCTIONS</h2><p>${appData.settings.objInstructionText}</p><p>Questions: ${objQuestionsFiltered.length} | Duration: ${appData.settings.objTimerMinutes} minutes.</p><div class="instruction-timer" id="stageTimer">${Math.floor(timerSeconds/60)}:${(timerSeconds%60).toString().padStart(2,"0")}</div><button id="startObjExamBtn" class="btn-primary" style="font-size:1.2rem">▶ START OBJECTIVE</button></div>`;
+    }
+    else if(examStage === "objective") {
+      if(!objQuestionsFiltered.length) { alert("No objective questions for your class/subject. Contact admin."); forceExit("No questions"); return "<div>Error</div>"; }
+      const q = objQuestionsFiltered[currentQuestionIndex];
+      let paletteHtml = `<div class="palette-grid">`;
+      objQuestionsFiltered.forEach((item, idx) => {
+        let cls = "q-btn";
+        if(currentStudent.answersObj[item.id]) cls += " answered";
+        if(flaggedSet.has(item.id)) cls += " flagged";
+        if(idx === currentQuestionIndex) cls += " current";
+        paletteHtml += `<div class="${cls}" data-qidx="${idx}">${idx+1}</div>`;
+      });
+      paletteHtml += `</div>`;
+      let optionsHtml = q.options.map(opt => `<label class="option-item"><input type="radio" name="objective" value="${opt.charAt(0)}" ${currentStudent.answersObj[q.id] === opt.charAt(0) ? "checked" : ""}> ${opt}</label>`).join("");
+      let imageHtml = q.imageData ? `<img style="max-width:300px; margin:10px 0; border-radius:12px;" src="${q.imageData}" />` : "";
+      return `<div class="exam-container"><div class="waec-header"><div class="logo-area"><h1><span>GSSS</span> CB-WASSCE</h1></div>
+      <div class="exam-info"><div class="student-badge"><div><strong>${currentStudent.name}</strong><br/>${currentStudent.id} | ${currentStudent.classLevel}</div>${currentStudent.photoDataURL ? `<img class="student-photo" src="${currentStudent.photoDataURL}"/>` : `<div style="width:48px;height:48px;background:#ccc;border-radius:50%;display:flex;align-items:center;justify-content:center">📷</div>`}</div><div class="countdown" id="stageTimer">--:--</div></div></div>
+      <div class="exam-main"><div class="question-palette"><div class="palette-title">📋 Question Palette</div>${paletteHtml}</div>
+      <div class="question-area"><div class="question-text"><strong>Q${currentQuestionIndex+1}. ${q.text}</strong></div>${imageHtml}<div class="options-list">${optionsHtml}</div></div></div>
+      <div class="nav-bar"><button class="nav-btn" id="prevBtn">◀ Previous</button><button class="nav-btn warning" id="flagBtn">${flaggedSet.has(q.id) ? "🏁 Unflag" : "🚩 Flag"}</button><button class="nav-btn" id="nextBtn">Next ▶</button><button class="nav-btn danger" id="submitObjBtn">📥 Submit Objective & Proceed to Theory (Paper)</button></div></div>`;
+    }
+    else if(examStage === "instruction_theory") {
+      return `<div class="instruction-box"><h2 style="color:#002D62">📝 THEORY / ESSAY (HYBRID MODE)</h2><p>${appData.settings.theoryInstructionText}</p><p>You will now see the theory questions. <strong>Answer them on the physical answer sheet provided.</strong> No digital submission required.</p><div class="instruction-timer" id="stageTimer">${Math.floor(timerSeconds/60)}:${(timerSeconds%60).toString().padStart(2,"0")}</div><button id="startTheoryPaperBtn" class="btn-primary" style="font-size:1.2rem">✍️ VIEW THEORY QUESTIONS & FINISH</button></div>`;
+    }
+    else if(examStage === "theory_hybrid") {
+      let theoryHtml = theoryQuestionsFiltered.map((q, idx) => `<div style="margin-bottom:20px; border-left: 4px solid #F5C400; padding-left: 15px;">
+        <strong>${idx+1}. ${q.text}</strong> (${q.subject})
+      </div>`).join("");
+      return `<div class="exam-container"><div class="waec-header"><div class="logo-area"><h1><span>GSSS</span> CB-WASSCE</h1></div>
+      <div class="exam-info"><div>${currentStudent.name} | Theory (Paper-based)</div><div class="countdown" id="stageTimer"></div></div></div>
+      <div class="exam-main" style="padding:30px; overflow-y:auto;"><h3 style="color:#002D62">📌 THEORY QUESTIONS (Answer on physical paper)</h3>${theoryHtml}
+      <div class="paper-theory-box"><p style="font-size:1.2rem">✍️ Please write your answers on the official answer booklet.</p><p>After finishing writing, click the button below to complete your examination.</p>
+      <button id="confirmTheoryPaperBtn" class="btn-primary" style="margin-top:15px;">✅ I HAVE ANSWERED ON PAPER – FINISH EXAM</button></div></div></div>`;
+    }
+    else if(examStage === "finished") {
+      let objScore = currentStudent.objScore || {correct:0, total:objQuestionsFiltered.length};
+      let percent = objScore.total ? Math.round((objScore.correct/objScore.total)*100) : 0;
+      return `<div style="max-width:700px;margin:80px auto;background:white;border-radius:24px;padding:40px;text-align:center">
+        <h2 style="color:#002D62">🏆 Examination Concluded</h2>
+        <p style="font-size:1.2rem">${currentStudent.name}, your Objective Score: <strong>${objScore.correct}/${objScore.total}</strong> (${percent}%)</p>
+        <p>Theory portion has been marked as completed on paper.</p>
+        <button id="logoutFinishBtn" class="btn-primary" style="margin-top:20px">Exit to Login</button>
+      </div>`;
+    }
+    return "<div>Loading...</div>";
+  }
+
+  // ======================== EVENT HANDLERS ========================
+  function attachEvents() {
+    if(currentView === "login") {
+      const loginBtn = document.getElementById("loginBtn");
+      if(loginBtn) loginBtn.onclick = () => {
+        const id = document.getElementById("studentId").value.trim();
+        const pwd = document.getElementById("studentPwd").value.trim();
+        const stu = appData.students.find(s => s.id.toLowerCase() === id.toLowerCase() && s.password === pwd);
+        if(!stu) alert("❌ Invalid credentials!");
+        else if(stu.taken) alert("⚠️ Exam already taken!");
+        else {
+  currentStudent = stu;
+  currentView = "exam";   // THIS LINE FIXES LOGIN
+
+  currentStudent.answersObj = currentStudent.answersObj || {};
+
+  // Filter questions based on class & subject
+  objQuestionsFiltered = getFilteredQuestions(
+    appData.objectiveQuestions,
+    currentStudent
+  );
+
+  theoryQuestionsFiltered = getFilteredQuestions(
+    appData.theoryQuestions,
+    currentStudent
+  );
+
+  if (objQuestionsFiltered.length === 0) {
+    alert("No objective questions assigned for your class/subject.");
+    return;
+  }
+
+  examActive = true;
+  flaggedSet.clear();
+  currentQuestionIndex = 0;
+  examStage = "instruction_obj";
+
+  const instrSeconds =
+    appData.settings.objInstructionTimer * 60;
+
+  startTimer(instrSeconds, () => {
+    if (examActive && examStage === "instruction_obj")
+      forceExit("Instruction time elapsed!");
+  });
+
+  render();
+}
+      };
+      document.getElementById("gotoAdminBtn").onclick = () => { currentView = "admin-login"; render(); };
+    }
+    if(currentView === "admin-login") {
+      document.getElementById("adminAuthBtn").onclick = () => { if(document.getElementById("adminPass").value === appData.settings.adminPassword) { currentView = "admin-dashboard"; render(); } else alert("Wrong password"); };
+      document.getElementById("backToLogin").onclick = () => { currentView = "login"; render(); };
+    }
+    if(currentView === "admin-dashboard") {
+      document.getElementById("addStudentBtn").onclick = () => {
+        const name=document.getElementById("stuName").value.trim(), id=document.getElementById("stuId").value.trim(), pwd=document.getElementById("stuPass").value.trim(), classLevel=document.getElementById("stuClass").value, batch=document.getElementById("stuBatch").value, subj=document.getElementById("stuSubject").value.trim(), date=document.getElementById("stuDate").value;
+        if(!name||!id||!pwd) { alert("Fill all required"); return; }
+        if(appData.students.find(s=>s.id===id)) { alert("ID exists"); return; }
+        const newStu = { id, name, password:pwd, classLevel, batch, subject:subj||"General", examDate:date||"2026-04-15", photoDataURL:"", taken:false, answersObj:{}, theoryCompleted:false, objCompleted:false, objScore:null };
+        const photo = document.getElementById("stuPhoto").files[0];
+        if(photo) { const reader = new FileReader(); reader.onload = e => { newStu.photoDataURL = e.target.result; appData.students.push(newStu); saveData(); render(); alert(`✅ ${name} added`); }; reader.readAsDataURL(photo); }
+        else { appData.students.push(newStu); saveData(); render(); alert(`✅ ${name} added`); }
+      };
+      document.getElementById("bulkObjBtn").onclick = () => {
+        const lines = document.getElementById("bulkObj").value.split("\n");
+        lines.forEach(line => { const p = line.split("|"); if(p.length>=7) { appData.objectiveQuestions.push({ id:"Q"+Date.now()+"_"+Math.random(), text:p[0], options:[`A. ${p[1]}`,`B. ${p[2]}`,`C. ${p[3]}`,`D. ${p[4]}`], correctLetter:p[5].trim(), classLevel:p[6].trim(), subject:p[7]?.trim()||"General", imageData:null }); } });
+        saveData(); render(); alert("Objective questions added");
+      };
+      document.getElementById("bulkTheoryBtn").onclick = () => {
+        const lines = document.getElementById("bulkTheory").value.split("\n");
+        lines.forEach(line => { const parts = line.split("|"); if(parts.length>=2) { appData.theoryQuestions.push({ id:"TH"+Date.now()+"_"+Math.random(), text:parts[0].trim(), classLevel:parts[1]?.trim()||"SS2", subject:parts[2]?.trim()||"General", imageData:null }); } });
+        saveData(); render(); alert("Theory questions added (paper-based)");
+      };
+      document.getElementById("saveInstructionsBtn").onclick = () => {
+        appData.settings.objInstructionText = document.getElementById("objInstrText").value;
+        appData.settings.theoryInstructionText = document.getElementById("theoryInstrText").value;
+        saveData(); alert("Instructions saved");
+      };
+      document.getElementById("setTimersBtn").onclick = () => {
+        appData.settings.objTimerMinutes = parseInt(document.getElementById("objExamMins").value)||60;
+        appData.settings.theoryTimerMinutes = parseInt(document.getElementById("theoryExamMins").value)||45;
+        appData.settings.objInstructionTimer = parseInt(document.getElementById("objInstrMins").value)||2;
+        appData.settings.theoryInstructionTimer = parseInt(document.getElementById("theoryInstrMins").value)||2;
+        saveData(); alert("Timers updated");
+      };
+      document.getElementById("pauseTheoryBtn").onclick = () => { appData.settings.examPaused = !appData.settings.examPaused; saveData(); render(); };
+      document.getElementById("refreshResults").onclick = () => { render(); };
+      document.getElementById("changeAdminPassBtn").onclick = () => { const np=document.getElementById("newAdminPass").value; if(np){appData.settings.adminPassword=np; saveData(); alert("Password changed");} };
+      document.getElementById("resetDataBtn").onclick = () => { if(confirm("ERASE ALL DATA?")){localStorage.clear(); location.reload();} };
+      document.getElementById("adminLogoutBtn").onclick = () => { currentView="login"; render(); };
+      document.querySelectorAll(".delStudentBtn").forEach(btn => btn.onclick = () => { appData.students = appData.students.filter(s=>s.id !== btn.getAttribute("data-id")); saveData(); render(); });
+    }
+    if(currentView === "exam" && currentStudent) {
+      if(examStage === "instruction_obj") {
+        document.getElementById("startObjExamBtn").onclick = () => { if(examTimer) clearInterval(examTimer); examStage="objective"; startTimer(appData.settings.objTimerMinutes * 60, () => { if(examActive && examStage==="objective") forceExit("Objective time expired!"); }); render(); };
+      } else if(examStage === "objective") {
+        document.getElementById("prevBtn").onclick = () => { if(currentQuestionIndex>0) currentQuestionIndex--; render(); };
+        document.getElementById("nextBtn").onclick = () => { if(currentQuestionIndex<objQuestionsFiltered.length-1) currentQuestionIndex++; render(); };
+        document.getElementById("flagBtn").onclick = () => { const qid=objQuestionsFiltered[currentQuestionIndex].id; if(flaggedSet.has(qid)) flaggedSet.delete(qid); else flaggedSet.add(qid); render(); };
+        document.querySelectorAll(".q-btn").forEach(el => el.onclick = () => { const idx=parseInt(el.getAttribute("data-qidx")); if(!isNaN(idx)) currentQuestionIndex=idx; render(); });
+        document.querySelectorAll("input[name='objective']").forEach(radio => radio.onchange = () => { const qid=objQuestionsFiltered[currentQuestionIndex].id; currentStudent.answersObj[qid]=radio.value; saveData(); });
+        document.getElementById("submitObjBtn").onclick = () => {
+          if(confirm("Submit objective? Cannot change.")) {
+            let correct=0; for(let q of objQuestionsFiltered) if(currentStudent.answersObj[q.id]===q.correctLetter) correct++;
+            currentStudent.objScore={correct,total:objQuestionsFiltered.length}; currentStudent.objCompleted=true; saveData();
+            if(examTimer) clearInterval(examTimer);
+            if(!canStudentProceedToTheory(currentStudent)) { alert("Theory stage paused by admin."); currentView="login"; examActive=false; render(); return; }
+            examStage="instruction_theory";
+            startTimer(appData.settings.theoryInstructionTimer * 60, () => { if(examActive && examStage==="instruction_theory") forceExit("Theory instruction timeout"); });
+            render();
+          }
+        };
+      } else if(examStage === "instruction_theory") {
+        document.getElementById("startTheoryPaperBtn").onclick = () => {
+          if(examTimer) clearInterval(examTimer);
+          examStage = "theory_hybrid";
+          startTimer(appData.settings.theoryTimerMinutes * 60, () => { if(examActive && examStage==="theory_hybrid") forceExit("Theory reading time expired. Please finish on paper."); });
+          render();
+        };
+      } else if(examStage === "theory_hybrid") {
+        document.getElementById("confirmTheoryPaperBtn").onclick = () => {
+          if(confirm("Have you answered all theory questions on the physical answer sheet? This will finalize your exam.")) {
+            currentStudent.theoryCompleted = true;
+            currentStudent.taken = true;
+            saveData();
+            if(examTimer) clearInterval(examTimer);
+            examStage = "finished";
+            render();
+          }
+        };
+      } else if(examStage === "finished") {
+        document.getElementById("logoutFinishBtn").onclick = () => { currentView="login"; render(); };
+      }
+    }
+  }
+
+  window.addEventListener("blur", () => { if(examActive && currentView==="exam") forceExit("⚠️ Cheating: Window focus lost."); });
+  document.addEventListener("visibilitychange", () => { if(document.hidden && examActive && currentView==="exam") forceExit("⚠️ Cheating: Tab switched."); });
+  render();
+</script>
+</body>
+</html>

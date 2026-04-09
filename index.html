@@ -1,0 +1,231 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSSS CB-WASSCE CBT System</title><style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+        height: 100vh;
+        display: flex;
+        background: #f4f6f9;
+    }
+
+    /* LEFT PANEL */
+    .left-panel {
+        width: 50%;
+        min-width: 300px;
+        background: #ffffff;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border-right: 1px solid #ddd;
+    }
+
+    .logo-section {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .logo-section img {
+        width: 70px;
+        margin-bottom: 10px;
+    }
+
+    .logo-section h2 {
+        font-size: 16px;
+        color: #333;
+    }
+
+    .card {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: #fff;
+    }
+
+    .card h3 {
+        font-size: 14px;
+        margin-bottom: 10px;
+        color: #444;
+        text-align: center;
+    }
+
+    .card input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .card button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 12px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .exam-btn {
+        background: #4caf50;
+        color: white;
+    }
+
+    .admin-btn {
+        background: #3f51b5;
+        color: white;
+    }
+
+    .footer {
+        text-align: center;
+        font-size: 12px;
+        color: #777;
+        margin-top: 10px;
+    }
+
+    /* RIGHT PANEL */
+    .right-panel {
+        width: 50%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(63, 81, 181, 0.75);
+        color: white;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .overlay h1 {
+        font-size: 22px;
+        margin-bottom: 15px;
+    }
+
+    .overlay p {
+        font-size: 15px;
+        line-height: 1.6;
+        max-width: 500px;
+    }
+
+    /* MOBILE */
+    @media(max-width: 768px) {
+        body {
+            flex-direction: row; /* keep left-right layout */
+        }
+
+        .left-panel {
+            width: 50%;
+        }
+
+        .right-panel {
+            width: 50%;
+        }
+    }
+
+        .left-panel {
+            width: 40%;
+        }
+
+        .right-panel {
+            width: 60%;
+        }
+    }
+
+        .left-panel {
+            width: 100%;
+        }
+
+        .right-panel {
+            width: 100%;
+            height: 250px;
+        }
+    }
+</style>
+
+</head><body><!-- LEFT SIDE -->
+<div class="left-panel">
+
+    <div>
+        <div class="logo-section">
+            <!-- You can replace this logo later -->
+            <img src="logo.png" alt="School Logo">
+            <h2>The West African Examinations Council</h2>
+            <h3>GSSS CB-WASSCE System</h3>
+        </div>
+
+        <!-- Candidate Access -->
+        <div class="card">
+            <h3>Welcome to Candidates Computer-Based WASSCE Platform</h3>
+            <p style="font-size:13px; text-align:center; margin-top:10px;">
+                Your candidate Examination Number is required on the login screen.
+                Incase you do not have it, kindly contact your test instructor or administrator.
+            </p>
+
+            <!-- CLICK TO PROCEED BUTTON -->
+            <a href="WAEC-CB-WASSCE-CBT-Full-Version.html">
+    <button>Click here to Proceed</button>
+</a>
+        </div>
+
+        <!-- Admin Login -->
+        <!-- Admin access will be from footer link -->
+    </div>
+
+    <div class="footer">
+        © 2026 - GSSS CB-WASSCE System<br>
+        <a href="WAEC-CB-WASSCE-CBT-Full-Version.html">Admin</a> | <a href="WAEC-CB-WASSCE-CBT-Full-Version.html">Candidate</a>
+    </div>
+
+</div>
+
+
+<!-- RIGHT SIDE -->
+<div class="right-panel">
+
+    <!-- VIDEO BACKGROUND -->
+    <!-- You will add your video later -->
+    <video autoplay muted loop>
+        <source src="video.mp4" type="video/mp4">
+    </video>
+
+    <div class="overlay">
+        <h1>Welcome to the Computer-Based Test Platform</h1>
+        <p>
+            To remain Africa's foremost examining body, providing qualitative and reliable educational assessment,
+            encouraging academic and moral excellence and promoting sustainable human resource development and
+            international cooperation.
+        </p>
+    </div>
+
+</div>
+
+</body>
+</html>
