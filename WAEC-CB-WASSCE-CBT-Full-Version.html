@@ -112,13 +112,13 @@
   let objQuestionsFiltered = [];   // no shuffle, fixed order based on class+subject
   let theoryQuestionsFiltered = [];
 
-  function getFilteredQuestions(questions, student) {
-    return questions.filter(q => q.classLevel === student.classLevel && q.classlevel === student.classlevel);
-  }
+  function getFilteredQuestions(questions, student) {  
+    return questions.filter(q => q.classLevel === student.classLevel);  
+}
 
-  function canStudentProceedToTheory(student) {
-    return !(student.objCompleted && !student.theoryCompleted && appData.settings.examPaused);
-  }
+  function canStudentProceedToTheory(student) {  
+    return student.objCompleted && !student.theoryCompleted;
+}
 
   function forceExit(reason) {
     if(!examActive) return;
