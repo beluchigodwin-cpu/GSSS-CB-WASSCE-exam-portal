@@ -103,7 +103,7 @@
   let theoryQuestionsFiltered = [];
 
   function getFilteredQuestions(questions, student) {
-    return questions.filter(q => q.classLevel === student.classLevel && q.subject === student.subject);
+    return questions.filter(q => q.classLevel === student.classLevel && q.classlevel === student.classlevel);
   }
 
   function canStudentProceedToTheory(student) {
