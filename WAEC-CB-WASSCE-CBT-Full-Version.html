@@ -62,12 +62,22 @@
   };
 
   function loadData() {
-    const stored = localStorage.getItem("GSSS_CBT_FINAL");
-    if(stored) { 
-      try { appData = JSON.parse(stored); } catch(e) { console.error("Corrupted storage, resetting..."); localStorage.removeItem("GSSS_CBT_FINAL"); initDemoData(); saveData(); }
-      console.log("Data loaded:", appData.students.length, "students");
-    } else { initDemoData(); saveData(); }
+  localStorage.clear(); // 🔥 ADD THIS LINE
+
+  const stored = localStorage.getItem("GSSS_CBT_FINAL");
+  if(stored) { 
+    try { appData = JSON.parse(stored); } 
+    catch(e) { 
+      console.error("Corrupted storage, resetting...");
+      localStorage.removeItem("GSSS_CBT_FINAL");
+      initDemoData(); 
+      saveData(); 
+    }
+  } else { 
+    initDemoData(); 
+    saveData(); 
   }
+}
   function saveData() { localStorage.setItem("GSSS_CBT_FINAL", JSON.stringify(appData)); }
 
   function initDemoData() {
