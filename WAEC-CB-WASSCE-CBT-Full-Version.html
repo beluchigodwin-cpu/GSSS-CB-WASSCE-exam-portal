@@ -62,20 +62,20 @@
   };
 
   function loadData() {
-  localStorage.clear(); // 🔥 ADD THIS LINE
-
   const stored = localStorage.getItem("GSSS_CBT_FINAL");
-  if(stored) { 
-    try { appData = JSON.parse(stored); } 
-    catch(e) { 
+
+  if (stored) {
+    try {
+      appData = JSON.parse(stored);
+    } catch (e) {
       console.error("Corrupted storage, resetting...");
       localStorage.removeItem("GSSS_CBT_FINAL");
-      initDemoData(); 
-      saveData(); 
+      initDemoData();
+      saveData();
     }
-  } else { 
-    initDemoData(); 
-    saveData(); 
+  } else {
+    initDemoData();
+    saveData();
   }
 }
   function saveData() { localStorage.setItem("GSSS_CBT_FINAL", JSON.stringify(appData)); }
@@ -263,15 +263,25 @@
       return `<div class="instruction-box"><h2 style="color:#002D62">📝 THEORY / ESSAY (HYBRID MODE)</h2><p>${appData.settings.theoryInstructionText}</p><p>You will now see the theory questions. <strong>Answer them on the physical answer sheet provided.</strong> No digital submission required.</p><div class="instruction-timer" id="stageTimer">${Math.floor(timerSeconds/60)}:${(timerSeconds%60).toString().padStart(2,"0")}</div><button id="startTheoryPaperBtn" class="btn-primary" style="font-size:1.2rem">✍️ VIEW THEORY QUESTIONS & FINISH</button></div>`;
     }
     else if(examStage === "theory_hybrid") {
+
+      if (!theoryQuestionsFiltered || theoryQuestionsFiltered.length === 0) {
+        return `<div class="exam-container">
+          <h2 style="color:red; padding:30px;">
+            No theory questions assigned for this class and subject.
+          </h2>
+        </div>`;
+      }
+
       let theoryHtml = theoryQuestionsFiltered.map((q, idx) => `<div style="margin-bottom:20px; border-left: 4px solid #F5C400; padding-left: 15px;">
         <strong>${idx+1}. ${q.text}</strong> (${q.subject})
       </div>`).join("");
+
       return `<div class="exam-container"><div class="waec-header"><div class="logo-area"><h1><span>GSSS</span> CB-WASSCE</h1></div>
       <div class="exam-info"><div>${currentStudent.name} | Theory (Paper-based)</div><div class="countdown" id="stageTimer"></div></div></div>
       <div class="exam-main" style="padding:30px; overflow-y:auto;"><h3 style="color:#002D62">📌 THEORY QUESTIONS (Answer on physical paper)</h3>${theoryHtml}
       <div class="paper-theory-box"><p style="font-size:1.2rem">✍️ Please write your answers on the official answer booklet.</p><p>After finishing writing, click the button below to complete your examination.</p>
       <button id="confirmTheoryPaperBtn" class="btn-primary" style="margin-top:15px;">✅ I HAVE ANSWERED ON PAPER – FINISH EXAM</button></div></div></div>`;
-    }
+}
     else if(examStage === "finished") {
       let objScore = currentStudent.objScore || {correct:0, total:objQuestionsFiltered.length};
       let percent = objScore.total ? Math.round((objScore.correct/objScore.total)*100) : 0;
