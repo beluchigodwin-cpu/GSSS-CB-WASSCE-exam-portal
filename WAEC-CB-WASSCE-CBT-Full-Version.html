@@ -382,7 +382,7 @@
             let correct=0; for(let q of objQuestionsFiltered) if(currentStudent.answersObj[q.id]===q.correctLetter) correct++;
             currentStudent.objScore={correct,total:objQuestionsFiltered.length}; currentStudent.objCompleted=true; saveData();
             if(examTimer) clearInterval(examTimer);
-            if(!canStudentProceedToTheory(currentStudent)) { alert("Theory stage paused by admin."); currentView="login"; examActive=false; render(); return; }
+            // Allow theory immediately (no restriction)
             examStage="instruction_theory";
             startTimer(appData.settings.theoryInstructionTimer * 60, () => { if(examActive && examStage==="instruction_theory") forceExit("Theory instruction timeout"); });
             render();
