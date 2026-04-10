@@ -81,22 +81,10 @@
   function saveData() { localStorage.setItem("GSSS_CBT_FINAL", JSON.stringify(appData)); }
 
   function initDemoData() {
-    appData.students = [
-      { id: "GSSS001", name: "Adeola Johnson", password: "adeola123", classLevel: "SS2", batch: "Morning", subject: "Mathematics", examDate: "2026-04-15", photoDataURL: "", taken: false, answersObj: {}, theoryCompleted: false, objCompleted: false, objScore: null },
-      { id: "GSSS002", name: "Emeka Okafor", password: "emeka456", classLevel: "SS1", batch: "Afternoon", subject: "English", examDate: "2026-04-15", photoDataURL: "", taken: false, answersObj: {}, theoryCompleted: false, objCompleted: false, objScore: null },
-      { id: "GSSS003", name: "Fatima Bello", password: "fatima789", classLevel: "SS3", batch: "Evening", subject: "Physics", examDate: "2026-04-15", photoDataURL: "", taken: false, answersObj: {}, theoryCompleted: false, objCompleted: false, objScore: null }
-    ];
-    // Objective questions with class & subject
-    appData.objectiveQuestions = [
-      { id: "obj1", text: "What is the capital of Nigeria?", options: ["A. Abuja", "B. Lagos", "C. Kano", "D. Ibadan"], correctLetter: "A", classLevel: "SS1", subject: "General", imageData: null },
-      { id: "obj2", text: "Solve for x: 2x + 5 = 15", options: ["A. 5", "B. 10", "C. 7", "D. 6"], correctLetter: "A", classLevel: "SS2", subject: "Mathematics", imageData: null },
-      { id: "obj3", text: "Who wrote 'Things Fall Apart'?", options: ["A. Chinua Achebe", "B. Wole Soyinka", "C. Chimamanda Adichie", "D. Ben Okri"], correctLetter: "A", classLevel: "SS3", subject: "English", imageData: null }
-    ];
-    appData.theoryQuestions = [
-      { id: "th1", text: "Discuss the effects of climate change on agriculture.", classLevel: "SS2", subject: "Geography", imageData: null },
-      { id: "th2", text: "Explain the concept of democracy and its principles.", classLevel: "SS3", subject: "Government", imageData: null }
-    ];
-  }
+  appData.students = [];
+  appData.objectiveQuestions = [];
+  appData.theoryQuestions = [];
+}
 
   loadData();
 
@@ -114,9 +102,32 @@ let allowBlurDetection = true;   // ← ADD THIS LINE HERE
 
 let objQuestionsFiltered = [];   
 let theoryQuestionsFiltered = [];
+function shuffleArray(arr) {
+  let a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+  function getFilteredQuestions(questions, student) {
 
-  function getFilteredQuestions(questions, student) {  
-    return questions.filter(q => q.classLevel === student.classLevel);  
+  let filtered = questions.filter(q =>
+    q.classLevel === student.classLevel &&
+    (!q.subject || q.subject === student.subject)
+  );
+
+  // Shuffle questions
+  filtered = shuffleArray(filtered);
+
+  // Shuffle options for objective
+  filtered.forEach(q => {
+    if (q.options) {
+      q.options = shuffleArray(q.options);
+    }
+  });
+
+  return filtered;
 }
 
   function canStudentProceedToTheory(student) {  
@@ -370,14 +381,48 @@ else if(examStage === "theory_hybrid") {
         const name=document.getElementById("stuName").value.trim(), id=document.getElementById("stuId").value.trim(), pwd=document.getElementById("stuPass").value.trim(), classLevel=document.getElementById("stuClass").value, batch=document.getElementById("stuBatch").value, subj=document.getElementById("stuSubject").value.trim(), date=document.getElementById("stuDate").value;
         if(!name||!id||!pwd) { alert("Fill all required"); return; }
         if(appData.students.find(s=>s.id===id)) { alert("ID exists"); return; }
-        const newStu = { id, name, password:pwd, classLevel, batch, subject:subj||"General", examDate:date||"2026-04-15", photoDataURL:"", taken:false, answersObj:{}, theoryCompleted:false, objCompleted:false, objScore:null };
+        const newStu = {
+  id,
+  name,
+  password: pwd,
+  classLevel,
+  batch,
+  department: subj || "General",
+
+  dateOfBirth: "",
+  registrationDate: new Date().toISOString(),
+
+  seatNumber: pwd.slice(-3),
+
+  photoDataURL: "",
+
+  taken: false,
+  answersObj: {},
+  theoryCompleted: false,
+  objCompleted: false,
+  objScore: null
+};
         const photo = document.getElementById("stuPhoto").files[0];
         if(photo) { const reader = new FileReader(); reader.onload = e => { newStu.photoDataURL = e.target.result; appData.students.push(newStu); saveData(); render(); alert(`✅ ${name} added`); }; reader.readAsDataURL(photo); }
         else { appData.students.push(newStu); saveData(); render(); alert(`✅ ${name} added`); }
       };
       document.getElementById("bulkObjBtn").onclick = () => {
         const lines = document.getElementById("bulkObj").value.split("\n");
-        lines.forEach(line => { const p = line.split("|"); if(p.length>=7) { appData.objectiveQuestions.push({ id:"Q"+Date.now()+"_"+Math.random(), text:p[0], options:[`A. ${p[1]}`,`B. ${p[2]}`,`C. ${p[3]}`,`D. ${p[4]}`], correctLetter:p[5].trim(), classLevel:p[6].trim(), subject:p[7]?.trim()||"General", imageData:null }); } });
+        lines.forEach(line => { const p = line.split("|"); if(p.length>=9) { appData.objectiveQuestions.push({
+  id: "Q" + Date.now() + "_" + Math.random(),
+  text: p[0],
+  options: [
+    `A. ${p[1]}`,
+    `B. ${p[2]}`,
+    `C. ${p[3]}`,
+    `D. ${p[4]}`
+  ],
+  correctLetter: p[5].trim(),
+  classLevel: p[6].trim(),
+  subject: p[7].trim(),
+  department: p[8].trim(),
+  imageData: null
+}); } });
         saveData(); render(); alert("Objective questions added");
       };
       document.getElementById("bulkTheoryBtn").onclick = () => {
@@ -406,7 +451,32 @@ else if(examStage === "theory_hybrid") {
     }
     if(currentView === "exam" && currentStudent) {
       if(examStage === "instruction_obj") {
-        document.getElementById("startObjExamBtn").onclick = () => { if(examTimer) clearInterval(examTimer); examStage="objective"; startTimer(appData.settings.objTimerMinutes * 60, () => { if(examActive && examStage==="objective") forceExit("Objective time expired!"); }); render(); };
+        document.getElementById("startObjExamBtn").onclick = () => {
+
+  if(examTimer) clearInterval(examTimer);
+
+  examStage = "objective";
+
+  // VERY IMPORTANT — mark exam as active
+  examActive = true;
+
+  // Enter fullscreen (anti-cheating standard)
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen();
+  }
+
+  startTimer(
+    appData.settings.objTimerMinutes * 60,
+    () => {
+      if (examActive && examStage === "objective") {
+        forceExit("Objective time expired!");
+      }
+    }
+  );
+
+  render();
+
+};
       } else if(examStage === "objective") {
         document.getElementById("prevBtn").onclick = () => { if(currentQuestionIndex>0) currentQuestionIndex--; render(); };
         document.getElementById("nextBtn").onclick = () => { if(currentQuestionIndex<objQuestionsFiltered.length-1) currentQuestionIndex++; render(); };
