@@ -102,15 +102,18 @@
 
   // ======================== GLOBAL STATE ========================
   let currentView = "login";
-  let currentStudent = null;
-  let examStage = "instruction_obj";
-  let currentQuestionIndex = 0;
-  let flaggedSet = new Set();
-  let examTimer = null;
-  let timerSeconds = 0;
-  let examActive = false;
-  let objQuestionsFiltered = [];   // no shuffle, fixed order based on class+subject
-  let theoryQuestionsFiltered = [];
+let currentStudent = null;
+let examStage = "instruction_obj";
+let currentQuestionIndex = 0;
+let flaggedSet = new Set();
+let examTimer = null;
+let timerSeconds = 0;
+let examActive = false;
+
+let allowBlurDetection = true;   // ← ADD THIS LINE HERE
+
+let objQuestionsFiltered = [];   
+let theoryQuestionsFiltered = [];
 
   function getFilteredQuestions(questions, student) {  
     return questions.filter(q => q.classLevel === student.classLevel);  
@@ -135,7 +138,9 @@
         currentStudent.objCompleted = true; 
         saveData(); 
       }
+allowBlurDetection = false;
       else if(examStage === "theory_hybrid") { 
+allowBlurDetection = false;
         currentStudent.theoryCompleted = true; 
         currentStudent.taken = true;
         saveData(); 
@@ -432,9 +437,34 @@
     }
   }
 
-  window.addEventListener("blur", () => { if(examActive && currentView==="exam") forceExit("⚠️ Cheating: Window focus lost."); });
-  document.addEventListener("visibilitychange", () => { if(document.hidden && examActive && currentView==="exam") forceExit("⚠️ Cheating: Tab switched."); });
-  render();
+  window.addEventListener("blur", () => {
+
+  if (
+    allowBlurDetection &&
+    examActive &&
+    currentView === "exam" &&
+    examStage === "objective"
+  ) {
+    forceExit("⚠️ Cheating: Window focus lost.");
+  }
+
+});
+
+document.addEventListener("visibilitychange", () => {
+
+  if (
+    allowBlurDetection &&
+    document.hidden &&
+    currentView === "exam" &&
+    examActive &&
+    examStage === "objective"
+  ) {
+    forceExit("⚠️ Cheating: Tab switched.");
+  }
+
+});
+
+render();
 </script>
 </body>
 </html>
