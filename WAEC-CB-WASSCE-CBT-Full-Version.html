@@ -130,20 +130,32 @@ let theoryQuestionsFiltered = [];
     alert(reason);
     if(currentStudent && examStage !== "finished") {
       if(examStage === "objective") { 
-        let correct = 0;
-        for(let q of objQuestionsFiltered) {
-          if(currentStudent.answersObj[q.id] === q.correctLetter) correct++;
-        }
-        currentStudent.objScore = { correct, total: objQuestionsFiltered.length };
-        currentStudent.objCompleted = true; 
-        saveData(); 
-      }
-allowBlurDetection = false;
-      else if(examStage === "theory_hybrid") { 
-        currentStudent.theoryCompleted = true; 
-        currentStudent.taken = true;
-        saveData(); 
-      }
+  let correct = 0;
+
+  for(let q of objQuestionsFiltered) {
+    if(currentStudent.answersObj[q.id] === q.correctLetter) {
+      correct++;
+    }
+  }
+
+  currentStudent.objScore = {
+    correct,
+    total: objQuestionsFiltered.length
+  };
+
+  currentStudent.objCompleted = true;
+
+  allowBlurDetection = false;   // ← MOVED INSIDE
+
+  saveData();
+}
+else if(examStage === "theory_hybrid") {
+
+  currentStudent.theoryCompleted = true;
+  currentStudent.taken = true;
+
+  saveData();
+}
     }
     currentView = "login";
     render();
