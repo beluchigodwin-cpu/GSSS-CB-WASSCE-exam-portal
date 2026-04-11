@@ -49,6 +49,7 @@
     students: [],
     objectiveQuestions: [],
     theoryQuestions: [],
+    pausedClasses: [],
     settings: {
       adminPassword: "Haggai08",
       objTimerMinutes: 60,
@@ -79,7 +80,28 @@
   }
 }
   function saveData() { localStorage.setItem("GSSS_CBT_FINAL", JSON.stringify(appData)); }
+function restartStudent(studentId) {
 
+  let stu =
+    appData.students.find(
+      s => s.id === studentId
+    );
+
+  if(!stu) return;
+
+  stu.answersObj = {};
+
+  stu.theoryCompleted = false;
+
+  stu.objCompleted = false;
+
+  stu.taken = false;
+
+  stu.objScore = null;
+
+  saveData();
+
+}
   function initDemoData() {
   appData.students = [];
   appData.objectiveQuestions = [];
@@ -93,6 +115,7 @@
 let currentStudent = null;
 let examStage = "instruction_obj";
 let currentQuestionIndex = 0;
+let currentTheoryIndex = 0;
 let flaggedSet = new Set();
 let examTimer = null;
 let timerSeconds = 0;
@@ -291,23 +314,72 @@ else if(examStage === "theory_hybrid") {
     }
     else if(examStage === "theory_hybrid") {
 
-      if (!theoryQuestionsFiltered || theoryQuestionsFiltered.length === 0) {
-        return `<div class="exam-container">
-          <h2 style="color:red; padding:30px;">
-            No theory questions assigned for this class and subject.
-          </h2>
-        </div>`;
-      }
+  let q = theoryQuestionsFiltered[currentTheoryIndex];
 
-      let theoryHtml = theoryQuestionsFiltered.map((q, idx) => `<div style="margin-bottom:20px; border-left: 4px solid #F5C400; padding-left: 15px;">
-        <strong>${idx+1}. ${q.text}</strong> (${q.subject})
-      </div>`).join("");
+  return `
+  <div class="exam-container">
 
-      return `<div class="exam-container"><div class="waec-header"><div class="logo-area"><h1><span>GSSS</span> CB-WASSCE</h1></div>
-      <div class="exam-info"><div>${currentStudent.name} | Theory (Paper-based)</div><div class="countdown" id="stageTimer"></div></div></div>
-      <div class="exam-main" style="padding:30px; overflow-y:auto;"><h3 style="color:#002D62">📌 THEORY QUESTIONS (Answer on physical paper)</h3>${theoryHtml}
-      <div class="paper-theory-box"><p style="font-size:1.2rem">✍️ Please write your answers on the official answer booklet.</p><p>After finishing writing, click the button below to complete your examination.</p>
-      <button id="confirmTheoryPaperBtn" class="btn-primary" style="margin-top:15px;">✅ I HAVE ANSWERED ON PAPER – FINISH EXAM</button></div></div></div>`;
+    <div class="waec-header">
+      <div class="logo-area">
+        <h1><span>GSSS</span> CB-WASSCE</h1>
+      </div>
+
+      <div class="exam-info">
+        <div>
+          ${currentStudent.name} |
+          Theory Question ${currentTheoryIndex + 1}
+          of ${theoryQuestionsFiltered.length}
+        </div>
+
+        <div class="countdown" id="stageTimer"></div>
+      </div>
+    </div>
+
+    <div class="exam-main"
+         style="padding:30px; overflow-y:auto;">
+
+      <h3 style="color:#002D62">
+        THEORY QUESTION
+      </h3>
+
+      <div style="
+        margin-top:20px;
+        border-left:4px solid #F5C400;
+        padding-left:15px;
+      ">
+        <strong>
+          ${currentTheoryIndex + 1}.
+          ${q.text}
+        </strong>
+      </div>
+
+      <div style="
+        margin-top:30px;
+        display:flex;
+        gap:10px;
+      ">
+
+        <button id="prevTheoryBtn"
+                class="btn-secondary">
+          Previous
+        </button>
+
+        <button id="nextTheoryBtn"
+                class="btn-primary">
+          Next
+        </button>
+
+        <button id="submitTheoryBtn"
+                class="btn-danger">
+          Submit Exam
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+  `;
 }
     else if(examStage === "finished") {
       let objScore = currentStudent.objScore || {correct:0, total:objQuestionsFiltered.length};
@@ -324,14 +396,61 @@ else if(examStage === "theory_hybrid") {
 
   // ======================== EVENT HANDLERS ========================
   function attachEvents() {
-    if(currentView === "login") {
-      const loginBtn = document.getElementById("loginBtn");
-      if(loginBtn) loginBtn.onclick = () => {
-        const id = document.getElementById("studentId").value.trim();
-        const pwd = document.getElementById("studentPwd").value.trim();
-        const stu = appData.students.find(s => s.id.toLowerCase() === id.toLowerCase() && s.password === pwd);
-        if(!stu) alert("❌ Invalid credentials!");
-        else if(stu.taken) alert("⚠️ Exam already taken!");
+    if(currentView === "") {
+
+  const loginBtn = d("loginBtn");
+
+  if(loginBtn) loginBtn.onclick = () => {
+
+    const id =
+      document.getElementById("studentId")
+      .value.trim();
+
+    const pwd =
+      document.getElementById("studentPwd")
+      .value.trim();
+
+    const stu =
+      appData.students.find(
+        s =>
+          s.id.toLowerCase() === id.toLowerCase() &&
+          s.password === pwd
+      );
+
+    if(!stu)
+      alert("❌ Invalid credentials!");
+
+    else if(stu.taken)
+      alert("⚠️ Exam already taken!");
+
+    else {
+
+      currentStudent = stu;
+
+      if(
+        appData.pausedClasses &&
+        appData.pausedClasses.includes(
+          currentStudent.classLevel
+        )
+      ) {
+
+        alert(
+          "⏸️ Your class examination is temporarily paused."
+        );
+
+        return;
+
+      }
+
+      currentView = "exam";
+
+      render();
+
+    }
+
+  };
+
+}
         else {
   currentStudent = stu;
   currentView = "exam";   // THIS LINE FIXES LOGIN
@@ -502,21 +621,70 @@ else if(examStage === "theory_hybrid") {
           render();
         };
       } else if(examStage === "theory_hybrid") {
-        document.getElementById("confirmTheoryPaperBtn").onclick = () => {
-          if(confirm("Have you answered all theory questions on the physical answer sheet? This will finalize your exam.")) {
-            currentStudent.theoryCompleted = true;
-            currentStudent.taken = true;
-            saveData();
-            if(examTimer) clearInterval(examTimer);
-            examStage = "finished";
-            render();
-          }
-        };
-      } else if(examStage === "finished") {
-        document.getElementById("logoutFinishBtn").onclick = () => { currentView="login"; render(); };
-      }
-    }
+        document.getElementById("nextTheoryBtn").onclick = () => {
+
+  if(currentTheoryIndex <
+     theoryQuestionsFiltered.length - 1) {
+
+    currentTheoryIndex++;
+
+    render();
   }
+
+};
+
+document.getElementById("prevTheoryBtn").onclick = () => {
+
+  if(currentTheoryIndex > 0) {
+
+    currentTheoryIndex--;
+
+    render();
+  }
+
+};
+
+document.getElementById("submitTheoryBtn").onclick = () => {
+
+  if(confirm(
+    "You have successfully submitted your examination. You may now leave the examination hall."
+  )) {
+
+    currentStudent.theoryCompleted = true;
+
+    currentStudent.taken = true;
+saveData();
+
+examActive = false;
+allowBlurDetection = false;
+
+if(examTimer) clearInterval(examTimer);
+    examStage = "finished";
+
+    render();
+
+  }
+
+};
+      } else if(examStage === "finished") {
+
+  document.getElementById(
+    "logoutFinishBtn"
+  ).onclick = () => {
+
+    examActive = false;
+
+    allowBlurDetection = false;
+
+    currentStudent = null;
+
+    currentView = "login";
+
+    render();
+
+  };
+
+}
 
   window.addEventListener("blur", () => {
 
@@ -544,7 +712,25 @@ document.addEventListener("visibilitychange", () => {
   }
 
 });
+function restartStudent(studentId) {
 
+  let stu = appData.students.find(
+    s => s.id === studentId
+  );
+
+  if(!stu) return;
+
+  stu.answersObj = {};
+  stu.objCompleted = false;
+  stu.theoryCompleted = false;
+  stu.taken = false;
+  stu.objScore = null;
+
+  saveData();
+
+  alert("Student exam has been restarted.");
+
+}
 render();
 </script>
 </body>
