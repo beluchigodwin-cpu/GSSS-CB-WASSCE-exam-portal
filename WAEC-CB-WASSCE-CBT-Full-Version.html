@@ -133,26 +133,28 @@ function shuffleArray(arr) {
   }
   return a;
 }
-  function getFilteredQuestions(questions, student) {
+  function getFilteredQuestions(
+  questions,
+  student
+) {
 
-  let filtered = questions.filter(q =>
-    q.classLevel === student.classLevel &&
-    (!q.subject || q.subject === student.subject)
-  );
+  let filtered =
+    questions.filter(q =>
 
-  // Shuffle questions
-  filtered = shuffleArray(filtered);
+      q.classLevel ===
+        student.classLevel &&
 
-  // Shuffle options for objective
-  filtered.forEach(q => {
-    if (q.options) {
-      q.options = shuffleArray(q.options);
-    }
-  });
+      q.subject ===
+        student.subject &&
 
-  return filtered;
+      q.department ===
+        student.department
+
+    );
+
+  return shuffleArray(filtered);
+
 }
-
   function canStudentProceedToTheory(student) {  
     return student.objCompleted && !student.theoryCompleted;
 }
@@ -258,7 +260,15 @@ else if(examStage === "theory_hybrid") {
     return `<div class="admin-panel"><h2 style="color:#002D62">🏫 GSSS CBT ADMIN (Hybrid Mode)</h2>
       <div class="card"><h3>➕ Register Student (Class & Subject)</h3>
         <div class="flex-row"><input id="stuName" placeholder="Full Name" style="flex:1"/><input id="stuId" placeholder="Student ID" style="flex:1"/><input id="stuPass" placeholder="Password" type="text" style="flex:1"/></div>
-        <div class="flex-row"><select id="stuClass"><option>SS1</option><option>SS2</option><option>SS3</option></select><select id="stuBatch"><option>Morning</option><option>Afternoon</option><option>Evening</option></select><input id="stuSubject" placeholder="Subject"/><input id="stuDate" type="date"/></div>
+        <div class="flex-row"><select id="stuClass"><option>SS1</option><option>SS2</option><option>SS3</option></select><select id="stuBatch">
+
+<option>Batch 1</option>
+
+<option>Batch 2</option>
+
+<option>Batch 3</option>
+
+</select><input id="stuSubject" placeholder="Subject"/><input id="stuDate" type="date"/></div>
         <div class="flex-row"><input type="file" id="stuPhoto" accept="image/*"/><button id="addStudentBtn" class="btn-primary">Add Student</button></div>
       </div>
       <div class="card"><h3>📚 Objective Questions (with Class & Subject)</h3><textarea id="bulkObj" rows="3" placeholder="Format: Question?|A|B|C|D|AnswerLetter|Class|Subject" style="width:100%"></textarea><button id="bulkObjBtn" class="btn-primary">Add Bulk</button></div>
@@ -396,51 +406,81 @@ else if(examStage === "theory_hybrid") {
 
   // ======================== EVENT HANDLERS ========================
   function attachEvents() {
-    if(currentView === "") {
-
-  const loginBtn = d("loginBtn");
-
-  if(loginBtn) loginBtn.onclick = () => {
-
-    const id =
-      document.getElementById("studentId")
-      .value.trim();
-
-    const pwd =
-      document.getElementById("studentPwd")
-      .value.trim();
-
-    const stu =
-      appData.students.find(
-        s =>
-          s.id.toLowerCase() === id.toLowerCase() &&
-          s.password === pwd
-      );
-
-    if(!stu)
-      alert("❌ Invalid credentials!");
-
-    else if(stu.taken)
-      alert("⚠️ Exam already taken!");
-
     else {
 
-      currentStudent = stu;
+  currentStudent = stu;
 
-      if(
-        appData.pausedClasses &&
-        appData.pausedClasses.includes(
-          currentStudent.classLevel
-        )
-      ) {
+  if(
+    appData.pausedClasses &&
+    appData.pausedClasses.includes(
+      currentStudent.classLevel
+    )
+  ) {
 
-        alert(
-          "⏸️ Your class examination is temporarily paused."
-        );
+    alert(
+      "⏸️ Your class examination is temporarily paused."
+    );
 
-        return;
+    return;
 
-      }
+  }
+
+  currentStudent.answersObj =
+    currentStudent.answersObj || {};
+
+  objQuestionsFiltered =
+    getFilteredQuestions(
+      appData.objectiveQuestions,
+      currentStudent
+    );
+
+  theoryQuestionsFiltered =
+    getFilteredQuestions(
+      appData.theoryQuestions,
+      currentStudent
+    );
+
+  if(objQuestionsFiltered.length === 0) {
+
+    alert(
+      "No objective questions assigned for your class / subject."
+    );
+
+    return;
+
+  }
+
+  examActive = true;
+
+  flaggedSet.clear();
+
+  currentQuestionIndex = 0;
+
+  currentTheoryIndex = 0;
+
+  examStage = "instruction_obj";
+
+  const instrSeconds =
+    appData.settings.objInstructionTimer * 60;
+
+  startTimer(instrSeconds, () => {
+
+    if(
+      examActive &&
+      examStage === "instruction_obj"
+    )
+
+      forceExit(
+        "Instruction time elapsed!"
+      );
+
+  });
+
+  currentView = "exam";
+
+  render();
+
+}
 
       currentView = "exam";
 
@@ -451,9 +491,7 @@ else if(examStage === "theory_hybrid") {
   };
 
 }
-        else {
-  currentStudent = stu;
-  currentView = "exam";   // THIS LINE FIXES LOGIN
+       
 
   currentStudent.answersObj = currentStudent.answersObj || {};
 
@@ -694,24 +732,37 @@ if(examTimer) clearInterval(examTimer);
     currentView === "exam" &&
     examStage === "objective"
   ) {
-    forceExit("⚠️ Cheating: Window focus lost.");
+
+    forceExit(
+      "⚠️ Cheating: Window focus lost."
+    );
+
   }
 
 });
 
-document.addEventListener("visibilitychange", () => {
+document.addEventListener(
+  "visibilitychange",
+  () => {
 
-  if (
-    allowBlurDetection &&
-    document.hidden &&
-    currentView === "exam" &&
-    examActive &&
-    examStage === "objective"
-  ) {
-    forceExit("⚠️ Cheating: Tab switched.");
+    if (
+      allowBlurDetection &&
+      document.hidden &&
+      currentView === "exam" &&
+      examActive &&
+      examStage === "objective"
+    ) {
+
+      forceExit(
+        "⚠️ Cheating: Tab switched."
+      );
+
+    }
+
   }
+);
 
-});
+render();
 function restartStudent(studentId) {
 
   let stu = appData.students.find(
