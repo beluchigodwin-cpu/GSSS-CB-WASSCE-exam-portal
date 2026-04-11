@@ -428,46 +428,43 @@ else if(examStage === "theory_hybrid") {
         );
 
         if (!stu) {
-          alert("❌ Invalid credentials!");
-          return;
-        }
-
-        if (stu.taken) {
-          alert("⚠️ Exam already taken!");
-          return;
-        }
-
-        if (currentStudent) {
-  currentStudent.answersObj =
-    currentStudent.answersObj || {};
+  alert("❌ Invalid credentials!");
+  return;
 }
 
-        objQuestionsFiltered =
-          getFilteredQuestions(
-            appData.objectiveQuestions,
-            currentStudent
-          );
+if (stu.taken) {
+  alert("⚠️ Exam already taken!");
+  return;
+}
 
-        theoryQuestionsFiltered =
-          getFilteredQuestions(
-            appData.theoryQuestions,
-            currentStudent
-          );
+currentStudent = stu;
 
-        if (objQuestionsFiltered.length === 0) {
-          alert(
-            "No objective questions assigned."
-          );
-          return;
-        }
+currentStudent.answersObj =
+  currentStudent.answersObj || {};
 
-        examActive = true;
-        flaggedSet.clear();
+objQuestionsFiltered =
+  getFilteredQuestions(
+    appData.objectiveQuestions,
+    currentStudent
+  );
 
-        currentQuestionIndex = 0;
-        currentTheoryIndex = 0;
+theoryQuestionsFiltered =
+  getFilteredQuestions(
+    appData.theoryQuestions,
+    currentStudent
+  );
 
-        examStage = "instruction_obj";
+examActive = true;
+flaggedSet.clear();
+
+currentQuestionIndex = 0;
+currentTheoryIndex = 0;
+
+examStage = "instruction_obj";
+
+currentView = "exam";
+
+render();
 
         const instrSeconds =
           appData.settings.objInstructionTimer * 60;
