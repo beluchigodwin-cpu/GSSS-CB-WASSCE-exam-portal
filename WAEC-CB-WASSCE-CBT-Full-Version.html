@@ -682,7 +682,7 @@ else if(examStage === "theory_hybrid") {
 
     currentTheoryIndex++;
 
-    render();
+    
   }
 
 };
@@ -693,7 +693,7 @@ document.getElementById("prevTheoryBtn").onclick = () => {
 
     currentTheoryIndex--;
 
-    render();
+    
   }
 
 };
@@ -715,8 +715,7 @@ allowBlurDetection = false;
 if(examTimer) clearInterval(examTimer);
     examStage = "finished";
 
-    render();
-
+    
   }
 
 };
@@ -734,8 +733,7 @@ if(examTimer) clearInterval(examTimer);
 
     currentView = "login";
 
-    render();
-
+    
   };
 
 }
