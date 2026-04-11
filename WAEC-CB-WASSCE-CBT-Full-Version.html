@@ -406,8 +406,24 @@ else if(examStage === "theory_hybrid") {
 
   // ======================== EVENT HANDLERS ========================
   function attachEvents() {
-    else {
+    else {if (currentView === "") {
+  const loginBtn = d("loginBtn");
 
+  if (loginBtn) {
+    loginBtn.onclick = () => {
+      const id = document.getElementById("studentId").value.trim();
+      const pwd = document.getElementById("studentPwd").value.trim();
+
+      const stu = appData.students.find(
+        s => s.id.toLowerCase() === id.toLowerCase() && s.password === pwd
+      );
+
+      if (!stu) {
+        alert("❌ Invalid credentials!");
+      } 
+      else if (stu.taken) {
+        alert("⚠️ Exam already taken!");
+      } 
   currentStudent = stu;
 
   if(
