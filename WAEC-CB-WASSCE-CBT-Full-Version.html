@@ -407,18 +407,24 @@ else if(examStage === "theory_hybrid") {
   // ======================== EVENT HANDLERS ========================
   function attachEvents() {
 
+  // ================= LOGIN =================
   if (currentView === "login") {
-    const loginBtn = d("loginBtn");
+
+    const loginBtn = document.getElementById("loginBtn");
 
     if (loginBtn) {
       loginBtn.onclick = () => {
 
-        const id = document.getElementById("studentId").value.trim();
-        const pwd = document.getElementById("studentPwd").value.trim();
+        const id =
+          document.getElementById("studentId").value.trim();
+
+        const pwd =
+          document.getElementById("studentPwd").value.trim();
 
         const stu = appData.students.find(
-          s => s.id.toLowerCase() === id.toLowerCase() &&
-               s.password === pwd
+          s =>
+            s.id.toLowerCase() === id.toLowerCase() &&
+            s.password === pwd
         );
 
         if (!stu) {
@@ -431,54 +437,101 @@ else if(examStage === "theory_hybrid") {
           return;
         }
 
-        currentStudent = stu;
+        if (currentStudent) {
+  currentStudent.answersObj =
+    currentStudent.answersObj || {};
+}
 
-        // paused check
-        if (
-          appData.pausedClasses &&
-          appData.pausedClasses.includes(currentStudent.classLevel)
-        ) {
-          alert("⏸️ Your class examination is temporarily paused.");
-          return;
-        }
+        objQuestionsFiltered =
+          getFilteredQuestions(
+            appData.objectiveQuestions,
+            currentStudent
+          );
 
-        currentStudent.answersObj = currentStudent.answersObj || {};
-
-        objQuestionsFiltered = getFilteredQuestions(
-          appData.objectiveQuestions,
-          currentStudent
-        );
-
-        theoryQuestionsFiltered = getFilteredQuestions(
-          appData.theoryQuestions,
-          currentStudent
-        );
+        theoryQuestionsFiltered =
+          getFilteredQuestions(
+            appData.theoryQuestions,
+            currentStudent
+          );
 
         if (objQuestionsFiltered.length === 0) {
-          alert("No objective questions assigned for your class / subject.");
+          alert(
+            "No objective questions assigned."
+          );
           return;
         }
 
         examActive = true;
         flaggedSet.clear();
+
         currentQuestionIndex = 0;
         currentTheoryIndex = 0;
+
         examStage = "instruction_obj";
 
         const instrSeconds =
           appData.settings.objInstructionTimer * 60;
 
-        startTimer(instrSeconds, () => {
-          if (examActive && examStage === "instruction_obj") {
-            forceExit("Instruction time elapsed!");
+        startTimer(
+          instrSeconds,
+          () => {
+            if (
+              examActive &&
+              examStage === "instruction_obj"
+            ) {
+              forceExit(
+                "Instruction time elapsed!"
+              );
+            }
           }
-        });
+        );
 
         currentView = "exam";
+
         render();
       };
     }
+
+    const adminBtn =
+      document.getElementById("gotoAdminBtn");
+
+    if (adminBtn) {
+      adminBtn.onclick = () => {
+        currentView = "admin-login";
+        render();
+      };
+    }
+
+    return;
   }
+
+  // ================= ADMIN LOGIN =================
+  if (currentView === "admin-login") {
+
+    document.getElementById("adminAuthBtn").onclick =
+      () => {
+
+        if (
+          document.getElementById("adminPass").value ===
+          appData.settings.adminPassword
+        ) {
+          currentView = "admin-dashboard";
+          render();
+        } else {
+          alert("Wrong password");
+        }
+      };
+
+    document.getElementById("backToLogin").onclick =
+      () => {
+        currentView = "login";
+        render();
+      };
+
+    return;
+  }
+
+}
        
 
   currentStudent.answersObj = currentStudent.answersObj || {};
