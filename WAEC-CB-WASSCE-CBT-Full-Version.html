@@ -729,27 +729,9 @@ else if(examStage === "finished") {
 
 }
 
-  
-
-function restartStudent(studentId) {
-
-  let stu = appData.students.find(
-    s => s.id === studentId
-  );
-
-  if(!stu) return;
-
-  stu.answersObj = {};
-  stu.objCompleted = false;
-  stu.theoryCompleted = false;
-  stu.taken = false;
-  stu.objScore = null;
-
-  saveData();
-
-  alert("Student exam has been restarted.");
-
 }
+
+
 window.addEventListener("blur", () => {
   if (
     allowBlurDetection &&
