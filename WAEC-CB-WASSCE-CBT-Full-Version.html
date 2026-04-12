@@ -437,30 +437,58 @@ if (stu.taken) {
   return;
 }
 
+currentStudent = stu;
 
+currentStudent.answersObj =
+  currentStudent.answersObj || {};
 
-        const instrSeconds =
-          appData.settings.objInstructionTimer * 60;
+objQuestionsFiltered =
+  getFilteredQuestions(
+    appData.objectiveQuestions,
+    currentStudent
+  );
 
-        startTimer(
-          instrSeconds,
-          () => {
-            if (
-              examActive &&
-              examStage === "instruction_obj"
-            ) {
-              forceExit(
-                "Instruction time elapsed!"
-              );
-            }
-          }
-        );
+theoryQuestionsFiltered =
+  getFilteredQuestions(
+    appData.theoryQuestions,
+    currentStudent
+  );
 
-        currentView = "exam";
+if (objQuestionsFiltered.length === 0) {
+  alert(
+    "No objective questions assigned for your class/subject."
+  );
+  return;
+}
 
-        render();
-      };
+examActive = true;
+
+flaggedSet.clear();
+
+currentQuestionIndex = 0;
+
+examStage = "instruction_obj";
+
+currentView = "exam";
+
+const instrSeconds =
+  appData.settings.objInstructionTimer * 60;
+
+startTimer(
+  instrSeconds,
+  () => {
+    if (
+      examActive &&
+      examStage === "instruction_obj"
+    ) {
+      forceExit(
+        "Instruction time elapsed!"
+      );
     }
+  }
+);
+
+render();
 
     const adminBtn =
       document.getElementById("gotoAdminBtn");
@@ -504,40 +532,6 @@ if (stu.taken) {
 }
        
 
-  currentStudent.answersObj = currentStudent.answersObj || {};
-
-  // Filter questions based on class & subject
-  objQuestionsFiltered = getFilteredQuestions(
-    appData.objectiveQuestions,
-    currentStudent
-  );
-
-  theoryQuestionsFiltered = getFilteredQuestions(
-    appData.theoryQuestions,
-    currentStudent
-  );
-
-  if (objQuestionsFiltered.length === 0) {
-    alert("No objective questions assigned for your class/subject.");
-    return;
-  }
-
-  examActive = true;
-  flaggedSet.clear();
-  currentQuestionIndex = 0;
-  examStage = "instruction_obj";
-
-  const instrSeconds =
-    appData.settings.objInstructionTimer * 60;
-
-  startTimer(instrSeconds, () => {
-    if (examActive && examStage === "instruction_obj")
-      forceExit("Instruction time elapsed!");
-  });
-
-  render();
-}
-      };
       
     if(currentView === "admin-dashboard") {
       document.getElementById("addStudentBtn").onclick = () => {
@@ -699,20 +693,24 @@ document.getElementById("submitTheoryBtn").onclick = () => {
     currentStudent.theoryCompleted = true;
 
     currentStudent.taken = true;
-saveData();
 
-examActive = false;
-allowBlurDetection = false;
+    saveData();
 
-if(examTimer) clearInterval(examTimer);
+    examActive = false;
+
+    allowBlurDetection = false;
+
+    if(examTimer) clearInterval(examTimer);
+
     examStage = "finished";
 
-    
+    render();   // ✅ ADD THIS LINE HERE
+
   }
 
 };
-      } else if(examStage === "finished") {
-
+} 
+else if(examStage === "finished") {
   document.getElementById(
     "logoutFinishBtn"
   ).onclick = () => {
@@ -725,7 +723,7 @@ if(examTimer) clearInterval(examTimer);
 
     currentView = "login";
 
-    
+    render();
   };
 
 }
