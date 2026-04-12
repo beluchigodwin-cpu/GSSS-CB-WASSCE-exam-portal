@@ -437,34 +437,7 @@ if (stu.taken) {
   return;
 }
 
-currentStudent = stu;
 
-currentStudent.answersObj =
-  currentStudent.answersObj || {};
-
-objQuestionsFiltered =
-  getFilteredQuestions(
-    appData.objectiveQuestions,
-    currentStudent
-  );
-
-theoryQuestionsFiltered =
-  getFilteredQuestions(
-    appData.theoryQuestions,
-    currentStudent
-  );
-
-examActive = true;
-flaggedSet.clear();
-
-currentQuestionIndex = 0;
-currentTheoryIndex = 0;
-
-examStage = "instruction_obj";
-
-currentView = "exam";
-
-render();
 
         const instrSeconds =
           appData.settings.objInstructionTimer * 60;
@@ -565,12 +538,7 @@ render();
   render();
 }
       };
-      document.getElementById("gotoAdminBtn").onclick = () => { currentView = "admin-login"; render(); };
-    }
-    if(currentView === "admin-login") {
-      document.getElementById("adminAuthBtn").onclick = () => { if(document.getElementById("adminPass").value === appData.settings.adminPassword) { currentView = "admin-dashboard"; render(); } else alert("Wrong password"); };
-      document.getElementById("backToLogin").onclick = () => { currentView = "login"; render(); };
-    }
+      
     if(currentView === "admin-dashboard") {
       document.getElementById("addStudentBtn").onclick = () => {
         const name=document.getElementById("stuName").value.trim(), id=document.getElementById("stuId").value.trim(), pwd=document.getElementById("stuPass").value.trim(), classLevel=document.getElementById("stuClass").value, batch=document.getElementById("stuBatch").value, subj=document.getElementById("stuSubject").value.trim(), date=document.getElementById("stuDate").value;
@@ -704,7 +672,8 @@ render();
 
     currentTheoryIndex++;
 
-    
+    render();
+
   }
 
 };
@@ -715,7 +684,8 @@ document.getElementById("prevTheoryBtn").onclick = () => {
 
     currentTheoryIndex--;
 
-    
+    render();
+
   }
 
 };
@@ -760,43 +730,7 @@ if(examTimer) clearInterval(examTimer);
 
 }
 
-  window.addEventListener("blur", () => {
-
-  if (
-    allowBlurDetection &&
-    examActive &&
-    currentView === "exam" &&
-    examStage === "objective"
-  ) {
-
-    forceExit(
-      "⚠️ Cheating: Window focus lost."
-    );
-
-  }
-
-});
-
-document.addEventListener(
-  "visibilitychange",
-  () => {
-
-    if (
-      allowBlurDetection &&
-      document.hidden &&
-      currentView === "exam" &&
-      examActive &&
-      examStage === "objective"
-    ) {
-
-      forceExit(
-        "⚠️ Cheating: Tab switched."
-      );
-
-    }
-
-  }
-);
+  
 
 function restartStudent(studentId) {
 
@@ -817,6 +751,28 @@ function restartStudent(studentId) {
   alert("Student exam has been restarted.");
 
 }
+window.addEventListener("blur", () => {
+  if (
+    allowBlurDetection &&
+    examActive &&
+    currentView === "exam" &&
+    examStage === "objective"
+  ) {
+    forceExit("⚠️ Cheating: Window focus lost.");
+  }
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (
+    allowBlurDetection &&
+    document.hidden &&
+    currentView === "exam" &&
+    examActive &&
+    examStage === "objective"
+  ) {
+    forceExit("⚠️ Cheating: Tab switched.");
+  }
+});
 render();
 </script>
 </body>
