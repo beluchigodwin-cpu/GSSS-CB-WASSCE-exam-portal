@@ -227,26 +227,39 @@ else if(examStage === "theory_hybrid") {
     return;
   }
 
-  if(currentView === "login")
-    root.innerHTML = renderLogin();
-
-  else if(currentView === "admin-login")
-    root.innerHTML = renderAdminLogin();
-
-  else if(currentView === "admin-dashboard")
-    root.innerHTML = renderAdminDashboard();
-
-  else if(currentView === "exam" && currentStudent)
-    root.innerHTML = renderExamByStage();
-
-  else
-    root.innerHTML = "<div style='padding:2rem;text-align:center'>Error</div>";
-
   try {
+
+    if(currentView === "login")
+      root.innerHTML = renderLogin();
+
+    else if(currentView === "admin-login")
+      root.innerHTML = renderAdminLogin();
+
+    else if(currentView === "admin-dashboard")
+      root.innerHTML = renderAdminDashboard();
+
+    else if(currentView === "exam" && currentStudent)
+      root.innerHTML = renderExamByStage();
+
+    else
+      root.innerHTML =
+        "<div style='padding:2rem;text-align:center'>System State Error</div>";
+
     attachEvents();
-  } catch (err) {
-    console.error("attachEvents error:", err);
+
   }
+  catch (err) {
+
+    console.error("Render crash:", err);
+
+    root.innerHTML =
+      "<div style='padding:40px;text-align:center'>" +
+      "<h2>System Error</h2>" +
+      "<p>Please reload the page.</p>" +
+      "</div>";
+
+  }
+
 }
 
   function renderLogin() {
@@ -344,6 +357,19 @@ else if(examStage === "theory_hybrid") {
       return `<div class="instruction-box"><h2 style="color:#002D62">📝 THEORY / ESSAY (HYBRID MODE)</h2><p>${appData.settings.theoryInstructionText}</p><p>You will now see the theory questions. <strong>Answer them on the physical answer sheet provided.</strong> No digital submission required.</p><div class="instruction-timer" id="stageTimer">${Math.floor(timerSeconds/60)}:${(timerSeconds%60).toString().padStart(2,"0")}</div><button id="startTheoryPaperBtn" class="btn-primary" style="font-size:1.2rem">✍️ VIEW THEORY QUESTIONS & FINISH</button></div>`;
     }
     else if(examStage === "theory_hybrid") {
+
+  if (!theoryQuestionsFiltered.length) {
+    return `
+      <div style="padding:40px;text-align:center">
+        <h2>No theory questions available.</h2>
+        <p>Contact the administrator.</p>
+      </div>
+    `;
+  }
+
+  if (currentTheoryIndex >= theoryQuestionsFiltered.length) {
+    currentTheoryIndex = 0;
+  }
 
   let q = theoryQuestionsFiltered[currentTheoryIndex];
 
